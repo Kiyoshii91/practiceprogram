@@ -8,7 +8,7 @@ Imports System.Data.OleDb 'To be able to use Microsoft Access Database
 Module Module1
     Dim connectionString As String
     Public oledbCnn As OleDbConnection
-
+	public binago para sa dito sa ano uhm ano tawag dine, basta ano sya repo
     Public sql As String
     Public oledbAdapter As OleDbDataAdapter
     Public testdbl As New DataSet
