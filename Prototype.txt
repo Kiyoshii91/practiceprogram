@@ -1,0 +1,252 @@
+--Module.vb Codex
+Imports System.Data.OleDb 'To be able to use Microsoft Access Database
+'Instructions to use the Import: Project -> NuGet Packages -> Browse -> Search for System OleDb then download it
+'Note: You also need to download the Access Database Engine either through canvas .net2 or through the internet
+'Then set it up through Project -> "Your Database" Properties ->  Compile -> Target CPU -> set it to "x86"
+
+' To use the access microsoft, create a new file -> create a table -> click view 
+Module Module1
+    Dim connectionString As String
+    Public oledbCnn As OleDbConnection
+
+    Public sql As String
+    Public oledbAdapter As OleDbDataAdapter
+    Public testdbl As New DataSet
+    Public drow, drow1 As DataRow
+
+    Public Function OpenConnection() As Boolean
+
+        'lumang  database mdb JET.OLEDB.4.0
+        'connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=d:\ sampleDbase\studentFile.accdb;"
+        connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=C:\Users\CJ\Documents\testdbl.accdb;"
+        'connectionString = "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=c:\Lima_Databases\testDbase.accdb;Jet OleDb: Database Password = Paulipots072803;"
+        oledbCnn = New OleDbConnection(connectionString)
+
+        Try
+            oledbCnn.Open()
+        Catch ex As Exception
+            MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Exclamation)
+            Return False
+        End Try
+        Return True
+    End Function
+
+    Public Sub BuilderConn(ByVal b As OleDbDataAdapter)
+        Dim builder As New OleDbCommandBuilder(b)
+        builder.GetUpdateCommand()
+        builder.ConflictOption = ConflictOption.OverwriteChanges
+    End Sub
+    Public Sub accountDataset()
+        sql = "Select * from testDbl"
+        oledbAdapter = New OleDbDataAdapter(sql, oledbCnn)
+        oledbAdapter.Fill(testdbl, "testDbl")
+    End Sub
+End Module
+
+--Accounts.vb Codex--
+
+Imports System.Security.Cryptography
+Public Class accounts
+    Dim op As Integer
+    Private Sub accounts_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        GroupBox1.Enabled = False
+        buttonControl(True, False, False, False)
+    End Sub
+
+    Private Sub accounts_Closed(sender As Object, e As EventArgs) Handles MyBase.Closed
+        'Dim dashboardFrm As New dashboard
+        'dashboardFrm.Show()
+    End Sub
+
+    Private Sub btnAdd_Click(sender As Object, e As EventArgs) Handles btnAdd.Click
+        If btnAdd.Text = "Add" Then
+            btnAdd.Text = "Save"
+            buttonControl(True, False, False, True)
+        ElseIf btnAdd.Text = "Save" Then
+            If txtStudent.Text = "" Then
+                MessageBox.Show("Fill up the Student #!!!", "Error")
+            ElseIf txtName.Text = "" Then
+                MessageBox.Show("Fill up the Name!!!", "Error")
+            ElseIf cbo_level.Text = "" Then
+                MessageBox.Show("Choose what Level!!!", "Error")
+            ElseIf txtUser.Text = "" Then
+                MessageBox.Show("Fill up the Username!!!", "Error")
+            ElseIf txtPass.Text = "" Then
+                MessageBox.Show("Fill up the Password!!!", "Error")
+            Else
+                op = 0
+                SearchRecord()
+                If op = 0 Then
+                    drow = testdbl.Tables("testDbl").NewRow
+                    drow("student_Num") = txtStudent.Text
+                    drow("studentName") = txtName.Text
+                    drow("studentLevel") = cbo_level.Text
+                    drow("UserStudent") = txtUser.Text
+                    drow("studentPass") = txtPass.Text
+
+                    testdbl.Tables("testDbl").Rows.Add(drow)
+                    BuilderConn(oledbAdapter)
+                    oledbAdapter.Update(testdbl, "testDbl")
+
+                    MessageBox.Show("Account Information Saved!!!", "Already Saved")
+                    ClearRec()
+                    btnAdd.Text = "Add"
+                    GroupBox1.Enabled = False
+                    txtStudent.Text = ""
+                    txtName.Text = ""
+                    cbo_level.Text = ""
+                    txtUser.Text = ""
+                    txtPass.Text = ""
+                End If
+            End If
+        End If
+    End Sub
+    Sub SearchRecord()
+        For ctr = 0 To testdbl.Tables("testDbl").Rows.Count - 1
+            drow = testdbl.Tables("testDbl").Rows(ctr)
+            If txtUser.Text = drow("Uname") Then
+                MessageBox.Show("Username Already Exists", "Error")
+                op = 1
+            End If
+            If txtUser.Text = drow("student_Num") Then
+                MessageBox.Show("ID Already Exists", "Error")
+                op = 1
+            End If
+            If op = 1 Then
+                Exit Sub
+            End If
+        Next
+    End Sub
+
+    Private Sub btn_upd_Click(sender As Object, e As EventArgs) Handles btn_upd.Click
+        If btn_upd.Text = "Update" Then
+            btn_upd.Text = "Save"
+            buttonControl(False, True, False, True)
+            txtStudent.Enabled = False
+        ElseIf btn_upd.Text = "Save" Then
+            If txtStudent.Text = "" Then
+                MessageBox.Show("Fill up the Student #!!!", "Error")
+            ElseIf txtName.Text = "" Then
+                MessageBox.Show("Fill up the Name!!!", "Error")
+            ElseIf cbo_level.Text = "" Then
+                MessageBox.Show("Choose what Level!!!", "Error")
+            ElseIf txtUser.Text = "" Then
+                MessageBox.Show("Fill up the Username!!!", "Error")
+            ElseIf txtPass.Text = "" Then               
+		 MessageBox.Show("Fill up the Password!!!", "Error")
+            Else
+                drow = testdbl.Tables("testDbl").Rows(searchaccount.ctr)
+                drow("student_Num") = txtStudent.Text
+                drow("studentName") = txtName.Text
+                drow("studentLevel") = cbo_level.Text
+                drow("UserStudent") = txtUser.Text
+                drow("studentPass") = txtPass.Text
+
+                BuilderConn(oledbAdapter)
+                oledbAdapter.Update(testdbl, "testDbl")
+                MessageBox.Show("Account Info Already Save")
+            End If
+            ClearRec()
+        End If
+    End Sub
+    Sub buttonControl(ByVal a As Boolean, ByVal u As Boolean, ByVal d As Boolean, ByVal g As Boolean)
+        btnAdd.Enabled = a
+        btn_upd.Enabled = u
+        btn_delete.Enabled = d
+        GroupBox1.Enabled = g
+    End Sub
+
+    Private Sub btn_cancel_Click(sender As Object, e As EventArgs) Handles btn_cancel.Click
+        ClearRec()
+    End Sub
+    Sub ClearRec()
+        buttonControl(True, False, False, False)
+        btnAdd.Text = "Add"
+        btn_upd.Text = "Update"
+        txtStudent.Text = ""
+        txtName.Text = ""
+        cbo_level.Text = ""
+        txtUser.Text = ""
+        txtPass.Text = ""
+    End Sub
+
+    Private Sub btn_search_Click(sender As Object, e As EventArgs) Handles btn_search.Click
+        Dim frmsearchAcc As New searchaccount
+        frmsearchAcc.ShowDialog()
+        If searchaccount.op = 1 Then
+            buttonControl(False, True, True, False)
+        End If
+    End Sub
+
+    Private Sub btn_delete_Click(sender As Object, e As EventArgs) Handles btn_delete.Click
+        If MessageBox.Show("Do you want to delete this account?", "Delete Account", MessageBoxButtons.YesNo) Then
+            testdbl.Tables("testDbl").Rows(searchaccount.ctr).Delete()
+            BuilderConn(oledbAdapter)
+            oledbAdapter.Update(testdbl, "testDbl")
+            MessageBox.Show("Account Information Already Deleted!!!", "Information Deleted")
+            ClearRec()
+        End If
+    End Sub
+End Class
+
+-- searchaccount.vb Codex --
+Public Class searchaccount
+    Public Shared op, ctr As Integer
+    Private Sub searchaccount_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+        displayAcc()
+    End Sub
+    Sub displayAcc()
+        For ctr = 0 To testdbl.Tables("testDbl").Rows.Count - 1
+            drow = testdbl.Tables("testDbl").Rows(ctr)
+            Results.Items.Add(drow("studentName").ToString() & " - " & drow("ID").ToString())
+        Next
+        Results.Sorted = True
+    End Sub
+
+    Private Sub Results_SelectedIndexChanged(sender As Object, e As EventArgs) Handles Results.SelectedIndexChanged
+        op = 0
+        If Results.SelectedItem Is Nothing Then
+            Return
+        End If
+        For ctr = 0 To testdbl.Tables("testDbl").Rows.Count - 1
+            drow1 = testdbl.Tables("testDbl").Rows(ctr)
+            Dim selectedName As String = Results.SelectedItem.ToString().Split("-"c)(0).Trim
+            Dim selectedID As String = Results.SelectedItem.ToString().Split("-"c)(1).Trim
+            If selectedID = drow1("ID") And selectedName = drow1("studentName").ToString() Then
+                op = 1
+                accounts.txtName.Text = drow1("studentName")
+                accounts.txtStudent.Text = drow1("student_Num")
+                accounts.txtUser.Text = drow1("UserStudent")
+                accounts.txtPass.Text = drow1("studentPass")
+                accounts.cbo_level.Text = drow1("studentLevel")
+                Me.Close()
+                Exit For
+            End If
+        Next
+    End Sub	
+
+    Private Sub TextBox1_TextChanged(sender As Object, e As EventArgs) Handles tbx_search.TextChanged
+        Results.Items.Clear()
+        Dim st, sr As String
+        st = tbx_search.Text
+        op = 0
+        Dim i As Integer
+        For ctr = 0 To testdbl.Tables("testDbl").Rows.Count - 1
+            drow = testdbl.Tables("testdbl").Rows(ctr)
+            sr = drow("studentName")
+            If (st.IndexOf(st) <> -1) Then
+                Results.Items.Add(drow("studentName"))
+                op = 1
+            End If
+            If op = 0 Then
+                displayAcc()
+                MessageBox.Show("Account Not Found", "Error", MessageBoxButtons.OK)
+                tbx_search.Focus()
+                tbx_search.Text = ""
+            End If
+            'If pagsamahin ang ferst at lastneym, concatenate molang edul ung ferst @ last neym poh
+            Results.Items.Add(drow("ID").ToString() & " - " & drow("studentName").ToString())
+            Results.Items.Add(drow("studentName"))
+        Next
+    End Sub
+End Class
